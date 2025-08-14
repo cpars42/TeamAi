@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Agent Chat Settings</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .nav {
+            background: #34495e;
+            padding: 10px 20px;
+        }
+        
+        .nav a {
+            color: white;
+            text-decoration: none;
+            margin-right: 20px;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        
+        .nav a:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .section {
+            margin-bottom: 40px;
+            padding: 20px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+        }
+        
+        .section h3 {
+            margin-top: 0;
+            color: #2c3e50;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        input[type="text"], textarea, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        
+        textarea {
+            height: 120px;
+            resize: vertical;
+            font-family: monospace;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+        
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+        
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+        
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+        
+        .status-message {
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .help-text {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .test-area {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 15px;
+        }
+        
+        .test-result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+        
+        .agent-config {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        
+        @media (max-width: 768px) {
+            .agent-config {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚙️ Multi-Agent Chat Settings</h1>
+            <p>Configure your AI agents and system behavior</p>
+        </div>
+        
+        <div class="nav">
+            <a href="/">← Back to Chat</a>
+            <a href="/health">System Health</a>
+        </div>
+        
+        <div class="content">
+            <div id="statusMessage" class="status-message"></div>
+            
+            <!-- API Configuration -->
+            <div class="section">
+                <h3>🔑 API Configuration</h3>
+                <div class="form-group">
+                    <label for="openaiKey">OpenAI API Key</label>
+                    <input type="text" id="openaiKey" placeholder="sk-..." autocomplete="off">
+                    <div class="help-text">Your OpenAI API key for ChatGPT integration</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="anthropicKey">Anthropic API Key</label>
+                    <input type="text" id="anthropicKey" placeholder="sk-ant-..." autocomplete="off">
+                    <div class="help-text">Your Anthropic API key for Claude integration</div>
+                </div>
+                
+                <div class="test-area">
+                    <button id="testKeys" class="btn-secondary">Test API Keys</button>
+                    <div id="testResult" class="test-result" style="display: none;"></div>
+                </div>
+            </div>
+            
+            <!-- Agent Configuration -->
+            <div class="section">
+                <h3>🤖 Agent Configuration</h3>
+                <div class="agent-config">
+                    <div>
+                        <h4>ChatGPT Settings</h4>
+                        <div class="form-group">
+                            <label for="gptModel">Model</label>
+                            <select id="gptModel">
+                                <option value="gpt-4">GPT-4</option>
+                                <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                                <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="gptTemperature">Temperature</label>
+                            <input type="range" id="gptTemperature" min="0" max="2" step="0.1" value="0.7">
+                            <div class="help-text">Creativity level (0 = focused, 2 = creative)</div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="gptPrompt">System Prompt</label>
+                            <textarea id="gptPrompt" placeholder="Enter custom system prompt for ChatGPT..."></textarea>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4>Claude Settings</h4>
+                        <div class="form-group">
+                            <label for="claudeModel">Model</label>
+                            <select id="claudeModel">
+                                <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet</option>
+                                <option value="claude-3-haiku-20240307">Claude 3 Haiku</option>
+                                <option value="claude-3-opus-20240229">Claude 3 Opus</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="claudeTemperature">Temperature</label>
+                            <input type="range" id="claudeTemperature" min="0" max="1" step="0.1" value="0.7">
+                            <div class="help-text">Creativity level (0 = focused, 1 = creative)</div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="claudePrompt">System Prompt</label>
+                            <textarea id="claudePrompt" placeholder="Enter custom system prompt for Claude..."></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- System Behavior -->
+            <div class="section">
+                <h3>⚡ System Behavior</h3>
+                <div class="form-group">
+                    <label for="maxTokens">Max Response Tokens</label>
+                    <input type="number" id="maxTokens" value="1000" min="100" max="4000">
+                    <div class="help-text">Maximum length of agent responses</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="timeout">Request Timeout (seconds)</label>
+                    <input type="number" id="timeout" value="30" min="5" max="120">
+                    <div class="help-text">How long to wait for API responses</div>
+                </div>
+                
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="enableHandoffs" checked>
+                        <label for="enableHandoffs">Enable Agent Handoffs</label>
+                    </div>
+                    <div class="help-text">Allow agents to hand off tasks to each other</div>
+                </div>
+                
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="enableLogging" checked>
+                        <label for="enableLogging">Enable Detailed Logging</label>
+                    </div>
+                    <div class="help-text">Log all API calls and responses for debugging</div>
+                </div>
+            </div>
+            
+            <!-- Actions -->
+            <div class="button-group">
+                <button id="saveSettings" class="btn-primary">💾 Save Settings</button>
+                <button id="resetSettings" class="btn-secondary">🔄 Reset to Defaults</button>
+                <button id="exportSettings" class="btn-secondary">📤 Export Config</button>
+                <button id="importSettings" class="btn-secondary">📥 Import Config</button>
+            </div>
+        </div>
+    </div>
+    
+    <input type="file" id="fileInput" accept=".json" style="display: none;">
+
+    <script>
+        class SettingsManager {
+            constructor() {
+                this.loadSettings();
+                this.setupEventListeners();
+                this.updateTemperatureDisplays();
+            }
+            
+            setupEventListeners() {
+                document.getElementById('saveSettings').addEventListener('click', () => this.saveSettings());
+                document.getElementById('resetSettings').addEventListener('click', () => this.resetSettings());
+                document.getElementById('testKeys').addEventListener('click', () => this.testApiKeys());
+                document.getElementById('exportSettings').addEventListener('click', () => this.exportSettings());
+                document.getElementById('importSettings').addEventListener('click', () => this.importSettings());
+                
+                // Temperature sliders
+                document.getElementById('gptTemperature').addEventListener('input', this.updateTemperatureDisplays);
+                document.getElementById('claudeTemperature').addEventListener('input', this.updateTemperatureDisplays);
+                
+                // File input for importing
+                document.getElementById('fileInput').addEventListener('change', (e) => this.handleFileImport(e));
+            }
+            
+            updateTemperatureDisplays() {
+                const gptTemp = document.getElementById('gptTemperature');
+                const claudeTemp = document.getElementById('claudeTemperature');
+                
+                gptTemp.nextElementSibling.textContent = `Creativity level: ${gptTemp.value} (0 = focused, 2 = creative)`;
+                claudeTemp.nextElementSibling.textContent = `Creativity level: ${claudeTemp.value} (0 = focused, 1 = creative)`;
+            }
+            
+            loadSettings() {
+                // Load from localStorage or set defaults
+                const settings = JSON.parse(localStorage.getItem('chatSettings')) || this.getDefaultSettings();
+                
+                document.getElementById('openaiKey').value = settings.openaiKey || '';
+                document.getElementById('anthropicKey').value = settings.anthropicKey || '';
+                document.getElementById('gptModel').value = settings.gptModel || 'gpt-4';
+                document.getElementById('claudeModel').value = settings.claudeModel || 'claude-3-5-sonnet-20241022';
+                document.getElementById('gptTemperature').value = settings.gptTemperature || 0.7;
+                document.getElementById('claudeTemperature').value = settings.claudeTemperature || 0.7;
+                document.getElementById('gptPrompt').value = settings.gptPrompt || this.getDefaultPrompts().gpt;
+                document.getElementById('claudePrompt').value = settings.claudePrompt || this.getDefaultPrompts().claude;
+                document.getElementById('maxTokens').value = settings.maxTokens || 1000;
+                document.getElementById('timeout').value = settings.timeout || 30;
+                document.getElementById('enableHandoffs').checked = settings.enableHandoffs !== false;
+                document.getElementById('enableLogging').checked = settings.enableLogging !== false;
+            }
+            
+            getDefaultSettings() {
+                const prompts = this.getDefaultPrompts();
+                return {
+                    gptModel: 'gpt-4',
+                    claudeModel: 'claude-3-5-sonnet-20241022',
+                    gptTemperature: 0.7,
+                    claudeTemperature: 0.7,
+                    gptPrompt: prompts.gpt,
+                    claudePrompt: prompts.claude,
+                    maxTokens: 1000,
+                    timeout: 30,
+                    enableHandoffs: true,
+                    enableLogging: true
+                };
+            }
+            
+            getDefaultPrompts() {
+                return {
+                    gpt: `You are one of two assistants in a private room. Only speak when explicitly called.
+
+If you want the other assistant to help, respond **only** with strict JSON (no extra text):
+{ "handoff": { "to": "claude", "task": "<one sentence>" } }
+
+If you are answering yourself, return normal text only (no JSON).
+Never cause more than one handoff per message.
+Your name is "gpt" for the handoff.to field.`,
+                    
+                    claude: `You are one of two assistants in a private room. Only speak when explicitly called.
+
+If you want the other assistant to help, respond **only** with strict JSON (no extra text):
+{ "handoff": { "to": "gpt", "task": "<one sentence>" } }
+
+If you are answering yourself, return normal text only (no JSON).
+Never cause more than one handoff per message.
+Your name is "claude" for the handoff.to field.`
+                };
+            }
+            
+            saveSettings() {
+                const settings = {
+                    openaiKey: document.getElementById('openaiKey').value,
+                    anthropicKey: document.getElementById('anthropicKey').value,
+                    gptModel: document.getElementById('gptModel').value,
+                    claudeModel: document.getElementById('claudeModel').value,
+                    gptTemperature: parseFloat(document.getElementById('gptTemperature').value),
+                    claudeTemperature: parseFloat(document.getElementById('claudeTemperature').value),
+                    gptPrompt: document.getElementById('gptPrompt').value,
+                    claudePrompt: document.getElementById('claudePrompt').value,
+                    maxTokens: parseInt(document.getElementById('maxTokens').value),
+                    timeout: parseInt(document.getElementById('timeout').value),
+                    enableHandoffs: document.getElementById('enableHandoffs').checked,
+                    enableLogging: document.getElementById('enableLogging').checked
+                };
+                
+                localStorage.setItem('chatSettings', JSON.stringify(settings));
+                this.showStatus('Settings saved successfully!', 'success');
+                
+                // In a real implementation, you'd send these to the server
+                console.log('Settings saved:', settings);
+            }
+            
+            resetSettings() {
+                if (confirm('Are you sure you want to reset all settings to defaults?')) {
+                    localStorage.removeItem('chatSettings');
+                    this.loadSettings();
+                    this.updateTemperatureDisplays();
+                    this.showStatus('Settings reset to defaults', 'success');
+                }
+            }
+            
+            async testApiKeys() {
+                const openaiKey = document.getElementById('openaiKey').value;
+                const anthropicKey = document.getElementById('anthropicKey').value;
+                
+                if (!openaiKey && !anthropicKey) {
+                    this.showStatus('Please enter at least one API key to test', 'error');
+                    return;
+                }
+                
+                const testResult = document.getElementById('testResult');
+                testResult.style.display = 'block';
+                testResult.textContent = 'Testing API keys...';
+                testResult.className = 'test-result';
+                
+                // In a real implementation, you'd test the keys against the actual APIs
+                // For now, just simulate the test
+                setTimeout(() => {
+                    let results = [];
+                    
+                    if (openaiKey) {
+                        if (openaiKey.startsWith('sk-') && openaiKey.length > 20) {
+                            results.push('✅ OpenAI key format looks valid');
+                        } else {
+                            results.push('❌ OpenAI key format appears invalid');
+                        }
+                    }
+                    
+                    if (anthropicKey) {
+                        if (anthropicKey.startsWith('sk-ant-') && anthropicKey.length > 20) {
+                            results.push('✅ Anthropic key format looks valid');
+                        } else {
+                            results.push('❌ Anthropic key format appears invalid');
+                        }
+                    }
+                    
+                    testResult.textContent = results.join('\n');
+                    testResult.style.background = results.some(r => r.includes('❌')) ? '#f8d7da' : '#d4edda';
+                }, 1000);
+            }
+            
+            exportSettings() {
+                const settings = JSON.parse(localStorage.getItem('chatSettings')) || this.getDefaultSettings();
+                
+                // Remove sensitive keys for export
+                const exportData = { ...settings };
+                delete exportData.openaiKey;
+                delete exportData.anthropicKey;
+                
+                const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'chat-settings.json';
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                this.showStatus('Settings exported (API keys excluded for security)', 'success');
+            }
+            
+            importSettings() {
+                document.getElementById('fileInput').click();
+            }
+            
+            handleFileImport(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const settings = JSON.parse(e.target.result);
+                        
+                        // Preserve existing API keys
+                        const currentSettings = JSON.parse(localStorage.getItem('chatSettings')) || {};
+                        settings.openaiKey = currentSettings.openaiKey || '';
+                        settings.anthropicKey = currentSettings.anthropicKey || '';
+                        
+                        localStorage.setItem('chatSettings', JSON.stringify(settings));
+                        this.loadSettings();
+                        this.updateTemperatureDisplays();
+                        this.showStatus('Settings imported successfully!', 'success');
+                    } catch (error) {
+                        this.showStatus('Error importing settings: Invalid JSON file', 'error');
+                    }
+                };
+                reader.readAsText(file);
+                
+                // Reset file input
+                event.target.value = '';
+            }
+            
+            showStatus(message, type) {
+                const statusEl = document.getElementById('statusMessage');
+                statusEl.textContent = message;
+                statusEl.className = `status-message status-${type}`;
+                statusEl.style.display = 'block';
+                
+                setTimeout(() => {
+                    statusEl.style.display = 'none';
+                }, 5000);
+            }
+        }
+        
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new SettingsManager();
+        });
+    </script>
+</body>
+</html>

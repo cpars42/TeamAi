@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Agent Chat Room</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .nav {
+            background: #34495e;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .nav a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        
+        .nav a:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .mode-controls {
+            background: #ecf0f1;
+            padding: 15px 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .mode-toggle {
+            display: flex;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .mode-toggle button {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            background: #f8f9fa;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        
+        .mode-toggle button.active {
+            background: #3498db;
+            color: white;
+        }
+        
+        .mode-toggle button:hover:not(.active) {
+            background: #e9ecef;
+        }
+        
+        .collaboration-config {
+            display: none;
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 10px;
+            border: 1px solid #ddd;
+        }
+        
+        .collaboration-config.active {
+            display: block;
+        }
+        
+        .config-row {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .config-row:last-child {
+            margin-bottom: 0;
+        }
+        
+        .config-row label {
+            font-weight: 500;
+            color: #555;
+            min-width: 120px;
+        }
+        
+        .config-row input, .config-row select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .config-row input[type="range"] {
+            flex: 1;
+        }
+        
+        .autopilot-status {
+            background: #e8f5e8;
+            color: #2d5a2d;
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin-top: 10px;
+            font-weight: 500;
+            display: none;
+        }
+        
+        .autopilot-status.active {
+            display: block;
+        }
+        
+        .final-suggestion {
+            background: #fff3cd;
+            color: #856404;
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin: 10px 20px;
+            border: 1px solid #ffeaa7;
+            display: none;
+        }
+        
+        .final-suggestion.active {
+            display: block;
+        }
+        
+        .chat-log {
+            height: 500px;
+            overflow-y: auto;
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .message {
+            margin-bottom: 15px;
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #ddd;
+        }
+        
+        .message.human {
+            background-color: #e3f2fd;
+            border-left-color: #2196f3;
+        }
+        
+        .message.gpt {
+            background-color: #f3e5f5;
+            border-left-color: #9c27b0;
+        }
+        
+        .message.claude {
+            background-color: #fff3e0;
+            border-left-color: #ff9800;
+        }
+        
+        .message.system {
+            background-color: #f1f8e9;
+            border-left-color: #4caf50;
+        }
+        
+        .message-header {
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+            color: #666;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .message-text {
+            line-height: 1.4;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .message-text code {
+            background: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.9em;
+        }
+        
+        .code-block {
+            background: #f8f8f8;
+            border: 1px solid #e1e1e1;
+            border-radius: 6px;
+            padding: 12px;
+            margin: 8px 0;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.85em;
+            line-height: 1.4;
+            overflow-x: auto;
+            white-space: pre;
+        }
+        
+        .code-block.javascript {
+            background: #f9f9f2;
+            border-left: 4px solid #f7df1e;
+        }
+        
+        .code-block.html {
+            background: #fff5f5;
+            border-left: 4px solid #e34c26;
+        }
+        
+        .code-block.css {
+            background: #f0f9ff;
+            border-left: 4px solid #1572b6;
+        }
+        
+        .code-block.python {
+            background: #f8f8ff;
+            border-left: 4px solid #3776ab;
+        }
+        
+        .message-text p {
+            margin: 0 0 8px 0;
+        }
+        
+        .message-text p:last-child {
+            margin-bottom: 0;
+        }
+        
+        .handoff {
+            font-style: italic;
+            color: #666;
+            background: #f0f0f0;
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 4px;
+        }
+        
+        .timestamp {
+            font-size: 0.8em;
+            color: #999;
+        }
+        
+        .input-area {
+            padding: 20px;
+            background: #fafafa;
+        }
+        
+        .input-form {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+        
+        .input-column {
+            flex: 1;
+        }
+        
+        .input-column label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #555;
+            font-size: 0.9em;
+        }
+        
+        #messageInput, #goalInput {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            resize: vertical;
+            min-height: 20px;
+            box-sizing: border-box;
+        }
+        
+        #targetSelect {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: white;
+            min-width: 100px;
+        }
+        
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        #sendButton, #startCollaboration {
+            padding: 12px 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        
+        #sendButton:hover, #startCollaboration:hover {
+            background: #2980b9;
+        }
+        
+        #sendButton:disabled, #startCollaboration:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+        
+        #allstopButton {
+            padding: 8px 16px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9em;
+            display: none;
+        }
+        
+        #allstopButton:hover {
+            background: #c0392b;
+        }
+        
+        #allstopButton.active {
+            display: block;
+        }
+        
+        .status {
+            padding: 10px 20px;
+            background: #e8f5e8;
+            border-top: 1px solid #ddd;
+            font-size: 0.9em;
+            color: #666;
+        }
+        
+        .status.disconnected {
+            background: #ffebee;
+            color: #c62828;
+        }
+        
+        .single-mode {
+            display: block;
+        }
+        
+        .collaboration-mode {
+            display: none;
+        }
+        
+        .single-mode.active {
+            display: block;
+        }
+        
+        .collaboration-mode.active {
+            display: block;
+        }
+        
+        .single-mode.inactive {
+            display: none;
+        }
+        
+        .collaboration-mode.inactive {
+            display: none;
+        }
+        
+        @media (max-width: 768px) {
+            .config-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+            
+            .config-row label {
+                min-width: auto;
+            }
+            
+            .input-form {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .button-group {
+                flex-direction: row;
+                justify-content: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 Multi-Agent Chat Room</h1>
+            <p>Chat with GPT and Claude in the same conversation</p>
+        </div>
+        
+        <div class="nav">
+            <div>
+                <a href="/settings">⚙️ Settings</a>
+                <a href="/health">📊 Health</a>
+            </div>
+            <div id="sessionInfo" style="font-size: 0.9em;"></div>
+        </div>
+        
+        <div class="mode-controls">
+            <div class="mode-toggle">
+                <button id="singleMode" class="active">Single Call</button>
+                <button id="collaborateMode">Collaborate (bounded)</button>
+                <button id="autopilotMode">Autopilot (unbounded)</button>
+            </div>
+            
+            <div id="collaborationConfig" class="collaboration-config">
+                <div class="config-row">
+                    <label for="goalInput">Goal:</label>
+                    <input type="text" id="goalInput" placeholder="What should the agents accomplish together?" style="flex: 1;">
+                </div>
+                <div class="config-row">
+                    <label for="initialSpeaker">Initial Speaker:</label>
+                    <select id="initialSpeaker">
+                        <option value="gpt">ChatGPT</option>
+                        <option value="claude">Claude</option>
+                    </select>
+                    <label for="maxRounds" id="maxRoundsLabel">Max Rounds:</label>
+                    <input type="range" id="maxRounds" min="2" max="10" value="6" style="width: 120px;">
+                    <span id="maxRoundsValue">6</span>
+                </div>
+            </div>
+            
+            <div id="autopilotStatus" class="autopilot-status">
+                <span id="autopilotText">Autopilot: inactive</span>
+            </div>
+        </div>
+        
+        <div id="finalSuggestion" class="final-suggestion">
+            <strong>💡 Agent suggests completion</strong> - Autopilot continues unless you say "Allstop"
+        </div>
+        
+        <div id="chatLog" class="chat-log">
+            <div class="message system">
+                <div class="message-header">System</div>
+                <div class="message-text">Welcome! Choose your interaction mode above and start chatting with AI agents.</div>
+            </div>
+        </div>
+        
+        <div class="input-area">
+            <!-- Single Mode UI -->
+            <div id="singleModeUI" class="input-form single-mode active">
+                <div class="input-column">
+                    <label for="messageInput">Message:</label>
+                    <textarea id="messageInput" placeholder="Type your message here..." rows="2"></textarea>
+                </div>
+                <div>
+                    <label for="targetSelect">Target:</label>
+                    <select id="targetSelect">
+                        <option value="gpt">@gpt</option>
+                        <option value="claude">@claude</option>
+                    </select>
+                </div>
+                <div class="button-group">
+                    <button id="sendButton">Send</button>
+                </div>
+            </div>
+            
+            <!-- Collaboration Mode UI -->
+            <div id="collaborationModeUI" class="collaboration-mode">
+                <div class="input-form">
+                    <div class="button-group">
+                        <button id="startCollaboration">Start Collaboration</button>
+                        <button id="allstopButton">🛑 ALLSTOP</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="status" class="status">
+            Connecting...
+        </div>
+    </div>
+
+    <script>
+        class ChatApp {
+            constructor() {
+                this.ws = null;
+                this.mode = 'single';
+                this.currentSessionId = null;
+                this.isAutopilotRunning = false;
+                
+                this.initializeElements();
+                this.initializeWebSocket();
+                this.setupEventListeners();
+                this.updateUI();
+                
+                // Force an initial button state update after everything is set up
+                setTimeout(() => {
+                    console.log('Initial button state update');
+                    this.updateButtonStates();
+                }, 100);
+            }
+            
+            initializeElements() {
+                this.chatLog = document.getElementById('chatLog');
+                this.messageInput = document.getElementById('messageInput');
+                this.targetSelect = document.getElementById('targetSelect');
+                this.goalInput = document.getElementById('goalInput');
+                this.initialSpeaker = document.getElementById('initialSpeaker');
+                this.maxRounds = document.getElementById('maxRounds');
+                this.maxRoundsValue = document.getElementById('maxRoundsValue');
+                this.sendButton = document.getElementById('sendButton');
+                this.startCollaboration = document.getElementById('startCollaboration');
+                this.allstopButton = document.getElementById('allstopButton');
+                this.status = document.getElementById('status');
+                this.autopilotStatus = document.getElementById('autopilotStatus');
+                this.autopilotText = document.getElementById('autopilotText');
+                this.finalSuggestion = document.getElementById('finalSuggestion');
+                this.sessionInfo = document.getElementById('sessionInfo');
+                
+                // Mode buttons
+                this.singleMode = document.getElementById('singleMode');
+                this.collaborateMode = document.getElementById('collaborateMode');
+                this.autopilotMode = document.getElementById('autopilotMode');
+                
+                // UI sections
+                this.collaborationConfig = document.getElementById('collaborationConfig');
+                this.singleModeUI = document.getElementById('singleModeUI');
+                this.collaborationModeUI = document.getElementById('collaborationModeUI');
+                this.maxRoundsLabel = document.getElementById('maxRoundsLabel');
+                
+                // Verify critical elements exist
+                if (!this.goalInput) {
+                    console.error('Goal input element not found!');
+                    // Try alternative selectors
+                    this.goalInput = document.querySelector('#goalInput') || document.querySelector('input[placeholder*="goal"]');
+                }
+                if (!this.startCollaboration) {
+                    console.error('Start collaboration button not found!');
+                }
+                
+                console.log('Elements initialized:', {
+                    goalInput: !!this.goalInput,
+                    startButton: !!this.startCollaboration,
+                    goalInputId: this.goalInput?.id,
+                    goalInputValue: this.goalInput?.value
+                });
+            }
+            
+            initializeWebSocket() {
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const wsUrl = `${protocol}//${window.location.host}/ws`;
+                
+                this.ws = new WebSocket(wsUrl);
+                
+                this.ws.onopen = () => {
+                    this.updateStatus('Connected', false);
+                    this.updateButtonStates();
+                };
+                
+                this.ws.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    this.handleMessage(data);
+                };
+                
+                this.ws.onclose = () => {
+                    this.updateStatus('Disconnected', true);
+                    this.updateButtonStates();
+                    setTimeout(() => this.initializeWebSocket(), 3000);
+                };
+                
+                this.ws.onerror = (error) => {
+                    console.error('WebSocket error:', error);
+                    this.updateStatus('Connection error', true);
+                };
+            }
+            
+            setupEventListeners() {
+                // Mode toggle buttons
+                this.singleMode.addEventListener('click', () => this.switchMode('single'));
+                this.collaborateMode.addEventListener('click', () => this.switchMode('collaborate'));
+                this.autopilotMode.addEventListener('click', () => this.switchMode('autopilot'));
+                
+                // Max rounds slider
+                this.maxRounds.addEventListener('input', () => {
+                    this.maxRoundsValue.textContent = this.maxRounds.value;
+                });
+                
+                // Single mode controls
+                this.sendButton.addEventListener('click', () => this.sendMessage());
+                this.messageInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        this.sendMessage();
+                    }
+                });
+                
+                // Collaboration mode controls
+                this.startCollaboration.addEventListener('click', () => this.startCollaborationSession());
+                this.allstopButton.addEventListener('click', () => this.sendAllstop());
+                
+                // Auto-focus appropriate inputs
+                this.messageInput.focus();
+            }
+            
+            switchMode(mode) {
+                // Stop any active collaboration FIRST
+                if (this.currentSessionId) {
+                    this.sendAllstop();
+                    // Wait a moment for the stop to process
+                    setTimeout(() => {
+                        this.completeModeSwitchAfterStop(mode);
+                    }, 500);
+                } else {
+                    this.completeModeSwitchAfterStop(mode);
+                }
+            }
+            
+            completeModeSwitchAfterStop(mode) {
+                this.mode = mode;
+                
+                // Update mode buttons
+                [this.singleMode, this.collaborateMode, this.autopilotMode].forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                
+                if (mode === 'single') {
+                    this.singleMode.classList.add('active');
+                } else if (mode === 'collaborate') {
+                    this.collaborateMode.classList.add('active');
+                } else if (mode === 'autopilot') {
+                    this.autopilotMode.classList.add('active');
+                }
+                
+                this.updateUI();
+            }
+            
+            updateUI() {
+                // Show/hide configuration based on mode
+                if (this.mode === 'single') {
+                    this.collaborationConfig.classList.remove('active');
+                    this.singleModeUI.classList.add('active');
+                    this.singleModeUI.classList.remove('inactive');
+                    this.collaborationModeUI.classList.remove('active');
+                    this.collaborationModeUI.classList.add('inactive');
+                    this.messageInput.placeholder = "Type your message here...";
+                    this.maxRoundsLabel.style.display = 'inline';
+                    this.maxRounds.style.display = 'inline';
+                    this.maxRoundsValue.style.display = 'inline';
+                } else {
+                    this.collaborationConfig.classList.add('active');
+                    this.singleModeUI.classList.remove('active');
+                    this.singleModeUI.classList.add('inactive');
+                    this.collaborationModeUI.classList.add('active');
+                    this.collaborationModeUI.classList.remove('inactive');
+                    
+                    if (this.mode === 'collaborate') {
+                        this.goalInput.placeholder = "What should the agents accomplish together?";
+                        this.maxRoundsLabel.style.display = 'inline';
+                        this.maxRounds.style.display = 'inline';
+                        this.maxRoundsValue.style.display = 'inline';
+                    } else if (this.mode === 'autopilot') {
+                        this.goalInput.placeholder = "What should the agents work on indefinitely? (say 'Allstop' to end)";
+                        this.maxRoundsLabel.style.display = 'none';
+                        this.maxRounds.style.display = 'none';
+                        this.maxRoundsValue.style.display = 'none';
+                    }
+                }
+                
+                // Force update button states after UI change
+                this.updateButtonStates();
+            }
+            
+            updateButtonStates() {
+                const connected = this.ws && this.ws.readyState === WebSocket.OPEN;
+                
+                this.sendButton.disabled = !connected;
+                
+                if (this.mode === 'single') {
+                    this.startCollaboration.disabled = true;
+                    this.allstopButton.classList.remove('active');
+                } else {
+                    const hasGoal = this.goalInput.value.trim();
+                    this.startCollaboration.disabled = !connected || !hasGoal || !!this.currentSessionId;
+                    
+                    if (this.currentSessionId) {
+                        this.allstopButton.classList.add('active');
+                    } else {
+                        this.allstopButton.classList.remove('active');
+                    }
+                }
+            }
+            
+            sendMessage() {
+                if (this.mode !== 'single') return;
+                
+                const text = this.messageInput.value.trim();
+                const target = this.targetSelect.value;
+                
+                if (!text) return;
+                
+                const message = {
+                    type: 'human_message',
+                    text: text,
+                    target: target,
+                    thread: 'default'
+                };
+                
+                this.sendWebSocketMessage(message);
+                this.messageInput.value = '';
+            }
+            
+            startCollaborationSession() {
+                const goal = this.goalInput.value.trim();
+                const initialSpeaker = this.initialSpeaker.value;
+                
+                if (!goal) {
+                    alert('Please enter a goal for the collaboration');
+                    return;
+                }
+                
+                const sessionId = 'session_' + Date.now();
+                this.currentSessionId = sessionId;
+                
+                const message = {
+                    type: 'start_collaboration',
+                    session_id: sessionId,
+                    goal: goal,
+                    initial_speaker: initialSpeaker,
+                    mode: this.mode,
+                    max_rounds: this.mode === 'collaborate' ? parseInt(this.maxRounds.value) : null
+                };
+                
+                this.sendWebSocketMessage(message);
+                this.updateButtonStates();
+                
+                if (this.mode === 'autopilot') {
+                    this.isAutopilotRunning = true;
+                    this.updateAutopilotStatus(1);
+                }
+            }
+            
+            sendAllstop() {
+                if (!this.currentSessionId) return;
+                
+                const message = {
+                    type: 'stop_collaboration',
+                    session_id: this.currentSessionId
+                };
+                
+                this.sendWebSocketMessage(message);
+                this.endSession();
+            }
+            
+            endSession() {
+                this.currentSessionId = null;
+                this.isAutopilotRunning = false;
+                this.updateButtonStates();
+                this.updateAutopilotStatus(0);
+                this.hideFinalSuggestion();
+            }
+            
+            sendWebSocketMessage(message) {
+                if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                    this.ws.send(JSON.stringify(message));
+                }
+            }
+            
+            handleMessage(data) {
+                console.log('Received:', data);
+                
+                switch (data.type) {
+                    case 'human_message':
+                        this.addMessage('human', 'You', data.text, data.ts);
+                        break;
+                    
+                    case 'agent_response':
+                        if (data.handoff) {
+                            this.addHandoffMessage(data.sender, data.handoff, data.ts);
+                        } else {
+                            this.addMessage(data.sender, this.formatSender(data.sender), data.text, data.ts);
+                        }
+                        
+                        // Handle collaboration session updates
+                        if (data.session_id && data.round) {
+                            this.updateAutopilotStatus(data.round);
+                        }
+                        
+                        // Handle final suggestion in autopilot mode
+                        if (data.final && this.mode === 'autopilot' && this.isAutopilotRunning) {
+                            this.showFinalSuggestion();
+                        }
+                        break;
+                    
+                    case 'collaboration_started':
+                        this.addSystemMessage(`Collaboration started: ${data.goal}`);
+                        this.currentSessionId = data.session_id;
+                        if (this.mode === 'autopilot') {
+                            this.isAutopilotRunning = true;
+                            this.updateAutopilotStatus(1);
+                        }
+                        this.updateButtonStates();
+                        break;
+                    
+                    case 'collaboration_ended':
+                        this.addSystemMessage(`Collaboration ended: ${data.reason}`);
+                        this.forceEndSession();
+                        break;
+                    
+                    case 'system_notice':
+                        this.addSystemMessage(data.text);
+                        break;
+                    
+                    case 'error':
+                        this.addSystemMessage(`Error: ${data.text}`, true);
+                        break;
+                }
+            }
+            
+            forceEndSession() {
+                // Force end session without sending more messages
+                this.currentSessionId = null;
+                this.isAutopilotRunning = false;
+                this.updateButtonStates();
+                this.updateAutopilotStatus(0);
+                this.hideFinalSuggestion();
+            }
+            
+            addMessage(type, sender, text, timestamp) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${type}`;
+                
+                const headerDiv = document.createElement('div');
+                headerDiv.className = 'message-header';
+                
+                const senderSpan = document.createElement('span');
+                senderSpan.textContent = sender;
+                headerDiv.appendChild(senderSpan);
+                
+                if (timestamp) {
+                    const timestampSpan = document.createElement('span');
+                    timestampSpan.className = 'timestamp';
+                    timestampSpan.textContent = new Date(timestamp * 1000).toLocaleTimeString();
+                    headerDiv.appendChild(timestampSpan);
+                }
+                
+                const textDiv = document.createElement('div');
+                textDiv.className = 'message-text';
+                
+                // Format the text with better code block handling
+                const formattedText = this.formatMessageText(text);
+                textDiv.innerHTML = formattedText;
+                
+                messageDiv.appendChild(headerDiv);
+                messageDiv.appendChild(textDiv);
+                
+                this.chatLog.appendChild(messageDiv);
+                this.scrollToBottom();
+            }
+            
+            formatMessageText(text) {
+                // Handle code blocks (``` fenced code blocks)
+                text = text.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
+                    const language = lang || 'code';
+                    const escapedCode = this.escapeHtml(code.trim());
+                    return `<div class="code-block ${language}">${escapedCode}</div>`;
+                });
+                
+                // Handle inline code (`code`)
+                text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+                
+                // Handle line breaks and paragraphs
+                const paragraphs = text.split('\n\n').filter(p => p.trim());
+                if (paragraphs.length > 1) {
+                    return paragraphs.map(p => `<p>${this.escapeHtml(p).replace(/\n/g, '<br>')}</p>`).join('');
+                } else {
+                    return this.escapeHtml(text).replace(/\n/g, '<br>');
+                }
+            }
+            
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+            
+            addHandoffMessage(sender, handoff, timestamp) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${sender}`;
+                
+                const headerDiv = document.createElement('div');
+                headerDiv.className = 'message-header';
+                
+                const senderSpan = document.createElement('span');
+                senderSpan.textContent = this.formatSender(sender);
+                headerDiv.appendChild(senderSpan);
+                
+                if (timestamp) {
+                    const timestampSpan = document.createElement('span');
+                    timestampSpan.className = 'timestamp';
+                    timestampSpan.textContent = new Date(timestamp * 1000).toLocaleTimeString();
+                    headerDiv.appendChild(timestampSpan);
+                }
+                
+                const handoffDiv = document.createElement('div');
+                handoffDiv.className = 'handoff';
+                handoffDiv.textContent = `🔄 Handing off to ${handoff.to}: ${handoff.task}`;
+                
+                messageDiv.appendChild(headerDiv);
+                messageDiv.appendChild(handoffDiv);
+                
+                this.chatLog.appendChild(messageDiv);
+                this.scrollToBottom();
+            }
+            
+            addSystemMessage(text, isError = false) {
+                this.addMessage('system', 'System', text, Math.floor(Date.now() / 1000));
+            }
+            
+            updateAutopilotStatus(round) {
+                if (this.mode === 'autopilot' && this.isAutopilotRunning) {
+                    this.autopilotStatus.classList.add('active');
+                    this.autopilotText.textContent = `Autopilot: running (turn ${round})`;
+                } else {
+                    this.autopilotStatus.classList.remove('active');
+                    this.autopilotText.textContent = 'Autopilot: inactive';
+                }
+            }
+            
+            showFinalSuggestion() {
+                this.finalSuggestion.classList.add('active');
+                setTimeout(() => {
+                    this.hideFinalSuggestion();
+                }, 10000); // Hide after 10 seconds
+            }
+            
+            hideFinalSuggestion() {
+                this.finalSuggestion.classList.remove('active');
+            }
+            
+            formatSender(sender) {
+                const senderMap = {
+                    'gpt': 'ChatGPT',
+                    'claude': 'Claude',
+                    'system': 'System',
+                    'you': 'You'
+                };
+                return senderMap[sender] || sender;
+            }
+            
+            updateStatus(message, isError) {
+                this.status.textContent = message;
+                this.status.className = isError ? 'status disconnected' : 'status';
+            }
+            
+            scrollToBottom() {
+                this.chatLog.scrollTop = this.chatLog.scrollHeight;
+            }
+            // Debug method for manual testing
+            testButtonState() {
+                console.log('=== COMPREHENSIVE BUTTON STATE DEBUG ===');
+                console.log('Mode:', this.mode);
+                
+                // Test multiple ways to get the goal input
+                const goalByQuery = document.querySelector('#goalInput');
+                const goalByGetElement = document.getElementById('goalInput');
+                const goalByClass = document.querySelector('input[id="goalInput"]');
+                
+                console.log('Goal input by querySelector:', goalByQuery);
+                console.log('Goal input by getElementById:', goalByGetElement);  
+                console.log('Goal input by class selector:', goalByClass);
+                console.log('this.goalInput:', this.goalInput);
+                
+                // Check values from different sources
+                console.log('Value from this.goalInput:', this.goalInput ? this.goalInput.value : 'UNDEFINED');
+                console.log('Value from querySelector:', goalByQuery ? goalByQuery.value : 'UNDEFINED');
+                console.log('Value from getElementById:', goalByGetElement ? goalByGetElement.value : 'UNDEFINED');
+                
+                // Check if they're the same element
+                console.log('Same element check (this vs getElementById):', this.goalInput === goalByGetElement);
+                console.log('Same element check (query vs getElement):', goalByQuery === goalByGetElement);
+                
+                // Display attributes
+                if (goalByGetElement) {
+                    console.log('Element attributes:', {
+                        id: goalByGetElement.id,
+                        value: goalByGetElement.value,
+                        placeholder: goalByGetElement.placeholder,
+                        disabled: goalByGetElement.disabled,
+                        readOnly: goalByGetElement.readOnly
+                    });
+                }
+                
+                console.log('Current session ID:', this.currentSessionId);
+                console.log('WebSocket state:', this.ws ? this.ws.readyState : 'NO WS');
+                console.log('Start button element:', this.startCollaboration);
+                console.log('Start button disabled:', this.startCollaboration ? this.startCollaboration.disabled : 'UNDEFINED');
+                
+                // Force re-get the element and try again
+                console.log('=== FORCING ELEMENT REFRESH ===');
+                this.goalInput = document.getElementById('goalInput');
+                console.log('After refresh, goal value:', this.goalInput ? this.goalInput.value : 'STILL UNDEFINED');
+                
+                this.updateButtonStates();
+                console.log('Final button state:', this.startCollaboration ? this.startCollaboration.disabled : 'NO BUTTON');
+                console.log('=== END DEBUG ===');
+            }
+        }
+        
+        // Global reference for debugging
+        let chatApp;
+        
+        // Initialize the app when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            chatApp = new ChatApp();
+            // Make it globally accessible for debugging
+            window.chatApp = chatApp;
+        });
+    </script>
+</body>
+</html>

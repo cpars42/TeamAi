@@ -1,0 +1,7 @@
+# API Keys (required)
+OPENAI_API_KEY=KEY_HERE
+ANTHROPIC_API_KEY=KEY_HERE
+
+# Server Configuration
+PORT=8000
+BIND_HOST=127.0.0.1
