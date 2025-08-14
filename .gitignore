@@ -49,3 +49,6 @@ Thumbs.db
 # Logs
 *.log
 logs/
+
+# GPT
+ChatGpt/
